@@ -16,29 +16,17 @@ function gauge(title, value, invert = false) {
   return `
   <div class="card kpi-card">
     <div class="card-title">${title} <span class="info">i</span></div>
-    <div class="gauge-wrap">
-      <div class="gauge-face">
-        <div class="gauge-inner"></div>
-        <div class="needle" style="transform:rotate(${deg}deg)"></div>
-        <div class="hub"></div>
-        <div class="gauge-value" style="color:${c}">${pct(value)}</div>
-        <div class="gauge-label" style="color:${c}">${l}</div>
-      </div>
-    </div>
+    <div class="gauge-wrap"><div class="gauge-face"><div class="gauge-inner"></div><div class="needle" style="transform:rotate(${deg}deg)"></div><div class="hub"></div><div class="gauge-value" style="color:${c}">${pct(value)}</div><div class="gauge-label" style="color:${c}">${l}</div></div></div>
     <div class="scale"><span>0%</span><span>100%</span></div>
   </div>`;
 }
 
 function bar(name, sub, value) {
-  return `
-  <div class="bar-row">
-    <div class="bar-label"><b>${name}</b><small>${sub}</small></div>
-    <div class="track"><div class="fill" style="width:${value}%;background:${color(value)}"></div></div>
-    <strong>${pct(value)}</strong>
-  </div>`;
+  return `<div class="bar-row"><div class="bar-label"><b>${name}</b><small>${sub}</small></div><div class="track"><div class="fill" style="width:${value}%;background:${color(value)}"></div></div><strong>${pct(value)}</strong></div>`;
 }
 
-app.get('/', async (req, res) => {
+function renderDashboard(req, res) {
+  const recordId = req.query.recordId || req.params.recordId || '';
   const html = `<!doctype html>
 <html>
 <head>
@@ -50,70 +38,22 @@ app.get('/', async (req, res) => {
 </head>
 <body>
 <div class="page">
-  <div class="card header mb">
-    <div>
-      <div class="eyebrow">🧠 Policy Governance Intelligence Dashboard</div>
-      <div class="title">National Agroecology Transition Policy</div>
-      <div class="sub">Policy Intelligence • Recursive Governance Architecture • Propagation Intelligence</div>
-      <div class="meta"><span>🏷️ Agriculture Policy</span><span>🇬🇭 Ghana</span><span>🏛️ MoFA</span><span>📄 POL-1</span></div>
-    </div>
-    <div class="meta"><span>📅 Updated: 5/23/2026</span><span>⬇ Export</span></div>
-  </div>
-
-  <div class="grid g5 mb">
-    ${gauge('Policy Governance Intelligence Score',82)}
-    ${gauge('Policy Aggregation Intelligence',78)}
-    ${gauge('Intrinsic OCI-D',84)}
-    ${gauge('Intrinsic OCI-O',68)}
-    ${gauge('Strategic Fragmentation Index',28,true)}
-  </div>
-
-  <div class="card assessment mb">
-    <h2>🧠 Overall Policy-Level Governance Assessment</h2>
-    <div class="grid g3">
-      <div class="mini"><span>⚙️ POG — Policy Operational Governance</span><div class="metric" style="color:#2563eb">74%</div>Moderate</div>
-      <div class="mini"><span>🧠 PIG — Policy Governance Intelligence</span><div class="metric" style="color:#16a34a">82%</div>Strong</div>
-      <div class="mini"><span>⚖️ Intelligence–Execution Differential</span><div class="metric">8%</div>🟢 Aligned</div>
-    </div>
-    <div class="interpret"><b>🧩 Recursively Coherent Policy System</b><p>Policy intelligence architecture remains structurally coherent, while execution propagation requires continued monitoring through programme transition layers.</p><span class="tag">🟢 Recursive continuity</span><span class="tag">🔵 Propagation integrity</span><span class="tag">🟠 Monitoring drift</span><span class="tag">🔴 Escalation inheritance risk</span></div>
-  </div>
-
-  <div class="grid g2 mb">
-    <div class="card"><div class="card-title">Recursive Governance Intelligence Components (C1–C6)</div>${bar('C1 Strategic Alignment','Policy-to-strategy alignment',90)}${bar('C2 Policy Translation','Translation into operational governance',85)}${bar('C3 Institutional Architecture','Institutional architecture maturity',75)}${bar('C4 Strategic Monitoring','Monitoring intelligence and continuity',70)}${bar('C5 Strategic Escalation','Escalation inheritance logic',68)}${bar('C6 Strategic Auditability','Recursive traceability and auditability',82)}<div class="weak"><span>Weakest Intelligence Layer<br>C5 Strategic Escalation</span><span>68%</span></div></div>
-    <div class="card"><div class="card-title">Recursive Intelligence Stability Layer</div>${bar('Strategic Alignment Stability','Stable policy alignment',90)}${bar('Translation Continuity','Policy translation continuity',85)}${bar('Architectural Integrity','Institutional and sectoral integrity',75)}${bar('Monitoring Intelligence','Recursive monitoring logic',70)}${bar('Escalation Intelligence','Escalation knowledge transfer',68)}${bar('Recursive Auditability','Documented intelligence chain',82)}</div>
-  </div>
-
-  <div class="grid g3 mb">
-    <div class="card"><div class="card-title">Referential Mapping Chain</div><div class="chain"><div class="node"><b>🏛️ National Strategy</b><span>NS-1</span></div><div class="arrow">➜</div><div class="node"><b>📄 Policy Layer</b><span>POL-1</span></div><div class="arrow">➜</div><div class="node"><b>📦 Programmes</b><span>3 linked programmes</span></div><div class="arrow">➜</div><div class="node"><b>⚙️ Operational Layer</b><span>Handled in POG</span></div></div></div>
-    <div class="card">${gauge('Governance Certification Readiness',76)}</div>
-    <div class="card"><div class="card-title">Propagation Signal</div><div class="box"><h4>Strongest propagation</h4><p>PRG-2 Circular Food Systems — 81%</p></div><div class="box"><h4>Weakest propagation</h4><p>PRG-3 Nutrition & Youth — 52%</p></div><span class="tag">🟠 Monitoring propagation risk</span></div>
-  </div>
-
-  <div class="card mb">
-    <div class="card-title">📚 Recursive Intelligence Architecture</div>
-    <div class="docgrid">
-      <div class="doc"><b>Primary strategic anchor</b>National Agroecology Transition Policy</div>
-      <div class="doc"><b>Recursive governance layer</b>National → Policy</div>
-      <div class="doc"><b>Governance owner</b>Ministry of Food & Agriculture</div>
-      <div class="doc"><b>Horizontal intelligence visibility</b>Accessible</div>
-      <div class="doc"><b>National reference documents</b>National Climate Action Strategy</div>
-      <div class="doc"><b>Regional reference documents</b>Regional Agroecology Guideline</div>
-      <div class="doc"><b>Propagation architecture</b>Operationally stable</div>
-      <div class="doc"><b>Recursive inheritance links</b>C1 • C2 • C3 preserved</div>
-    </div>
-    <div><span class="tag">📘 Strategic Source</span><span class="tag">🧭 Governance Translation</span><span class="tag">🔗 Propagation Chain</span><span class="tag">🏛 Institutional Ownership</span><span class="tag">🌍 Regional Alignment</span></div>
-  </div>
-
-  <div class="grid g2">
-    <div class="card"><div class="card-title">Linked Programme Governance Intelligence Benchmarking</div><table class="tbl"><tr><th>#</th><th>Programme</th><th>Governance Intelligence</th><th>Status</th></tr><tr><td>1</td><td>PRG-1 Agroecology Pilot</td><td>78%</td><td><span class="status">Moderate</span></td></tr><tr><td>2</td><td>PRG-2 Circular Food Systems</td><td>81%</td><td><span class="status strong">Strong</span></td></tr><tr><td>3</td><td>PRG-3 Nutrition & Youth</td><td>52%</td><td><span class="status fragile">Fragile</span></td></tr></table></div>
-    <div class="card"><div class="card-title">Recursive Governance Intelligence Synthesis</div><div class="box"><h4>Executive Summary</h4><p>Policy intelligence architecture remains structurally coherent with stable recursive continuity.</p></div><div class="box"><h4>Propagation Outlook</h4><p>Monitoring propagation remains partially unstable across programme transition layers.</p></div><div class="box"><h4>Reviewer Focus</h4><p>Cross-policy escalation inheritance and recursive monitoring sufficiency.</p></div><div class="box"><h4>Intelligence Strengths</h4><p>✅ Strong strategic alignment<br>✅ Coherent translation architecture<br>✅ Traceable policy intelligence chain</p></div><div class="box"><h4>Intelligence Gaps</h4><p>⚠️ Escalation inheritance remains uneven<br>⚠️ Monitoring intelligence requires stronger propagation evidence</p></div></div>
-  </div>
+  <div class="card header mb"><div><div class="eyebrow">🧠 Policy Governance Intelligence Dashboard</div><div class="title">National Agroecology Transition Policy</div><div class="sub">Policy Intelligence • Recursive Governance Architecture • Propagation Intelligence</div><div class="meta"><span>🏷️ Agriculture Policy</span><span>🇬🇭 Ghana</span><span>🏛️ MoFA</span><span>📄 POL-1</span>${recordId ? `<span>🔗 ${recordId}</span>` : ''}</div></div><div class="meta"><span>📅 Updated: 5/23/2026</span><span>⬇ Export</span></div></div>
+  <div class="grid g5 mb">${gauge('Policy Governance Intelligence Score',82)}${gauge('Policy Aggregation Intelligence',78)}${gauge('Intrinsic OCI-D',84)}${gauge('Intrinsic OCI-O',68)}${gauge('Strategic Fragmentation Index',28,true)}</div>
+  <div class="card assessment mb"><h2>🧠 Overall Policy-Level Governance Assessment</h2><div class="grid g3"><div class="mini"><span>⚙️ POG — Policy Operational Governance</span><div class="metric" style="color:#2563eb">74%</div>Moderate</div><div class="mini"><span>🧠 PIG — Policy Governance Intelligence</span><div class="metric" style="color:#16a34a">82%</div>Strong</div><div class="mini"><span>⚖️ Intelligence–Execution Differential</span><div class="metric">8%</div>🟢 Aligned</div></div><div class="interpret"><b>🧩 Recursively Coherent Policy System</b><p>Policy intelligence architecture remains structurally coherent, while execution propagation requires continued monitoring through programme transition layers.</p><span class="tag">🟢 Recursive continuity</span><span class="tag">🔵 Propagation integrity</span><span class="tag">🟠 Monitoring drift</span><span class="tag">🔴 Escalation inheritance risk</span></div></div>
+  <div class="grid g2 mb"><div class="card"><div class="card-title">Recursive Governance Intelligence Components (C1–C6)</div>${bar('C1 Strategic Alignment','Policy-to-strategy alignment',90)}${bar('C2 Policy Translation','Translation into operational governance',85)}${bar('C3 Institutional Architecture','Institutional architecture maturity',75)}${bar('C4 Strategic Monitoring','Monitoring intelligence and continuity',70)}${bar('C5 Strategic Escalation','Escalation inheritance logic',68)}${bar('C6 Strategic Auditability','Recursive traceability and auditability',82)}<div class="weak"><span>Weakest Intelligence Layer<br>C5 Strategic Escalation</span><span>68%</span></div></div><div class="card"><div class="card-title">Recursive Intelligence Stability Layer</div>${bar('Strategic Alignment Stability','Stable policy alignment',90)}${bar('Translation Continuity','Policy translation continuity',85)}${bar('Architectural Integrity','Institutional and sectoral integrity',75)}${bar('Monitoring Intelligence','Recursive monitoring logic',70)}${bar('Escalation Intelligence','Escalation knowledge transfer',68)}${bar('Recursive Auditability','Documented intelligence chain',82)}</div></div>
+  <div class="grid g3 mb"><div class="card"><div class="card-title">Referential Mapping Chain</div><div class="chain"><div class="node"><b>🏛️ National Strategy</b><span>NS-1</span></div><div class="arrow">➜</div><div class="node"><b>📄 Policy Layer</b><span>POL-1</span></div><div class="arrow">➜</div><div class="node"><b>📦 Programmes</b><span>3 linked programmes</span></div><div class="arrow">➜</div><div class="node"><b>⚙️ Operational Layer</b><span>Handled in POG</span></div></div></div><div class="card">${gauge('Governance Certification Readiness',76)}</div><div class="card"><div class="card-title">Propagation Signal</div><div class="box"><h4>Strongest propagation</h4><p>PRG-2 Circular Food Systems — 81%</p></div><div class="box"><h4>Weakest propagation</h4><p>PRG-3 Nutrition & Youth — 52%</p></div><span class="tag">🟠 Monitoring propagation risk</span></div></div>
+  <div class="card mb"><div class="card-title">📚 Recursive Intelligence Architecture</div><div class="docgrid"><div class="doc"><b>Primary strategic anchor</b>National Agroecology Transition Policy</div><div class="doc"><b>Recursive governance layer</b>National → Policy</div><div class="doc"><b>Governance owner</b>Ministry of Food & Agriculture</div><div class="doc"><b>Horizontal intelligence visibility</b>Accessible</div><div class="doc"><b>National reference documents</b>National Climate Action Strategy</div><div class="doc"><b>Regional reference documents</b>Regional Agroecology Guideline</div><div class="doc"><b>Propagation architecture</b>Operationally stable</div><div class="doc"><b>Recursive inheritance links</b>C1 • C2 • C3 preserved</div></div><div><span class="tag">📘 Strategic Source</span><span class="tag">🧭 Governance Translation</span><span class="tag">🔗 Propagation Chain</span><span class="tag">🏛 Institutional Ownership</span><span class="tag">🌍 Regional Alignment</span></div></div>
+  <div class="grid g2"><div class="card"><div class="card-title">Linked Programme Governance Intelligence Benchmarking</div><table class="tbl"><tr><th>#</th><th>Programme</th><th>Governance Intelligence</th><th>Status</th></tr><tr><td>1</td><td>PRG-1 Agroecology Pilot</td><td>78%</td><td><span class="status">Moderate</span></td></tr><tr><td>2</td><td>PRG-2 Circular Food Systems</td><td>81%</td><td><span class="status strong">Strong</span></td></tr><tr><td>3</td><td>PRG-3 Nutrition & Youth</td><td>52%</td><td><span class="status fragile">Fragile</span></td></tr></table></div><div class="card"><div class="card-title">Recursive Governance Intelligence Synthesis</div><div class="box"><h4>Executive Summary</h4><p>Policy intelligence architecture remains structurally coherent with stable recursive continuity.</p></div><div class="box"><h4>Propagation Outlook</h4><p>Monitoring propagation remains partially unstable across programme transition layers.</p></div><div class="box"><h4>Reviewer Focus</h4><p>Cross-policy escalation inheritance and recursive monitoring sufficiency.</p></div><div class="box"><h4>Intelligence Strengths</h4><p>✅ Strong strategic alignment<br>✅ Coherent translation architecture<br>✅ Traceable policy intelligence chain</p></div><div class="box"><h4>Intelligence Gaps</h4><p>⚠️ Escalation inheritance remains uneven<br>⚠️ Monitoring intelligence requires stronger propagation evidence</p></div></div></div>
 </div>
 </body>
 </html>`;
   res.type('html').send(html);
-});
+}
 
-app.get('/api', (req, res) => res.redirect('/'));
+app.get('/', renderDashboard);
+app.get('/api', renderDashboard);
+app.get('/api/:recordId', renderDashboard);
+app.get('/dashboard', renderDashboard);
 
 app.listen(PORT, () => console.log(`PIG dashboard running on ${PORT}`));
