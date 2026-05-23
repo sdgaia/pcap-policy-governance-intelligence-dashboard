@@ -3,364 +3,117 @@ import express from 'express';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const pct = v => `${Math.round(v)}%`;
+const color = v => v >= 80 ? '#16a34a' : v >= 60 ? '#2563eb' : v >= 40 ? '#f97316' : '#dc2626';
+const label = v => v >= 80 ? 'Strong' : v >= 60 ? 'Moderate' : v >= 40 ? 'Fragile' : 'Critical';
+const invColor = v => v <= 20 ? '#16a34a' : v <= 40 ? '#2563eb' : v <= 60 ? '#f97316' : '#dc2626';
+const invLabel = v => v <= 20 ? 'Low Exposure' : v <= 40 ? 'Moderate Exposure' : v <= 60 ? 'High Exposure' : 'Severe Exposure';
+
+function gauge(title, value, invert = false) {
+  const c = invert ? invColor(value) : color(value);
+  const l = invert ? invLabel(value) : label(value);
+  const deg = -90 + (value * 1.8);
+  return `
+  <div class="card kpi-card">
+    <div class="card-title">${title} <span class="info">i</span></div>
+    <div class="gauge-wrap">
+      <div class="gauge-face">
+        <div class="gauge-inner"></div>
+        <div class="needle" style="transform:rotate(${deg}deg)"></div>
+        <div class="hub"></div>
+        <div class="gauge-value" style="color:${c}">${pct(value)}</div>
+        <div class="gauge-label" style="color:${c}">${l}</div>
+      </div>
+    </div>
+    <div class="scale"><span>0%</span><span>100%</span></div>
+  </div>`;
+}
+
+function bar(name, sub, value) {
+  return `
+  <div class="bar-row">
+    <div class="bar-label"><b>${name}</b><small>${sub}</small></div>
+    <div class="track"><div class="fill" style="width:${value}%;background:${color(value)}"></div></div>
+    <strong>${pct(value)}</strong>
+  </div>`;
+}
+
 app.get('/', async (req, res) => {
-  res.send(`
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title>PCAP Policy Governance Intelligence Dashboard</title>
-    <meta charset="UTF-8" />
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background: #f3f5f9;
-        margin: 0;
-        padding: 24px;
-        color: #17233c;
-      }
-
-      .container {
-        max-width: 1600px;
-        margin: auto;
-      }
-
-      .hero {
-        background: white;
-        border-radius: 18px;
-        padding: 24px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      }
-
-      .hero h1 {
-        margin: 0;
-        font-size: 42px;
-      }
-
-      .subtitle {
-        margin-top: 10px;
-        color: #60708f;
-        font-size: 16px;
-      }
-
-      .top-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 16px;
-        margin-bottom: 20px;
-      }
-
-      .card {
-        background: white;
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      }
-
-      .card-title {
-        font-size: 14px;
-        font-weight: bold;
-        margin-bottom: 14px;
-      }
-
-      .gauge {
-        width: 100%;
-        height: 90px;
-        position: relative;
-      }
-
-      .gauge svg {
-        width: 100%;
-        height: 100%;
-      }
-
-      .gauge-value {
-        position: absolute;
-        width: 100%;
-        text-align: center;
-        top: 42px;
-        font-size: 28px;
-        font-weight: bold;
-      }
-
-      .section-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
-        margin-bottom: 20px;
-      }
-
-      .metric-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
-      }
-
-      .bar {
-        height: 10px;
-        border-radius: 20px;
-        background: #dfe6ef;
-        overflow: hidden;
-        margin-top: 6px;
-      }
-
-      .bar-fill {
-        height: 100%;
-        border-radius: 20px;
-      }
-
-      .pill-row {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-
-      .pill {
-        padding: 6px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        background: #edf2ff;
-      }
-
-      .summary-box {
-        border: 1px solid #e6ebf3;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 10px;
-      }
-
-      .summary-box h4 {
-        margin: 0 0 6px 0;
-        font-size: 13px;
-      }
-
-      .summary-box p {
-        margin: 0;
-        font-size: 13px;
-        color: #4d5d79;
-      }
-
-      .documents-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-      }
-
-      .doc-card {
-        border: 1px solid #e4e9f2;
-        border-radius: 12px;
-        padding: 10px;
-        background: #fafcff;
-      }
-
-      .doc-label {
-        font-size: 11px;
-        color: #70809c;
-        margin-bottom: 4px;
-      }
-
-      .doc-title {
-        font-size: 13px;
-        font-weight: bold;
-      }
-
-    </style>
-  </head>
-  <body>
-    <div class="container">
-
-      <div class="hero">
-        <h1>🧠 National Agroecology Transition Policy</h1>
-        <div class="subtitle">
-          Policy Governance Intelligence • Recursive Policy Architecture • Propagation Intelligence
-        </div>
-      </div>
-
-      <div class="top-grid">
-
-        ${renderGauge('PIG Score',82,'#22c55e')}
-        ${renderGauge('Strategic Aggregation',78,'#2563eb')}
-        ${renderGauge('Intrinsic OCI-D',84,'#22c55e')}
-        ${renderGauge('Intrinsic OCI-O',68,'#2563eb')}
-        ${renderGauge('Fragmentation Index',28,'#ef4444')}
-
-      </div>
-
-      <div class="card" style="margin-bottom:20px;">
-        <div class="card-title">🧩 Overall Policy Intelligence Assessment</div>
-
-        <div class="section-grid">
-          <div class="summary-box">
-            <h4>🟢 PIG Score</h4>
-            <p>82% — Recursive governance architecture remains strategically coherent.</p>
-          </div>
-
-          <div class="summary-box">
-            <h4>🟠 Intelligence–Execution Differential</h4>
-            <p>Execution propagation remains weaker than recursive policy continuity.</p>
-          </div>
-        </div>
-
-        <div class="pill-row">
-          <div class="pill">Recursive continuity</div>
-          <div class="pill">Propagation integrity</div>
-          <div class="pill">Cross-policy coherence</div>
-          <div class="pill">Strategic visibility</div>
-        </div>
-      </div>
-
-      <div class="section-grid">
-
-        <div class="card">
-          <div class="card-title">Recursive Governance Intelligence Components</div>
-
-          ${metric('C1 Strategic Alignment',90,'#22c55e')}
-          ${metric('C2 Policy Translation',85,'#22c55e')}
-          ${metric('C3 Sectoral Architecture',75,'#2563eb')}
-          ${metric('C4 Strategic Monitoring',70,'#2563eb')}
-          ${metric('C5 Strategic Escalation',68,'#2563eb')}
-          ${metric('C6 Strategic Auditability',82,'#22c55e')}
-
-        </div>
-
-        <div class="card">
-          <div class="card-title">Recursive Intelligence Stability Layer</div>
-
-          ${metric('Strategic Alignment Stability',90,'#22c55e')}
-          ${metric('Translation Continuity',85,'#22c55e')}
-          ${metric('Architectural Integrity',75,'#2563eb')}
-          ${metric('Monitoring Intelligence',70,'#2563eb')}
-          ${metric('Escalation Intelligence',68,'#2563eb')}
-          ${metric('Recursive Auditability',82,'#22c55e')}
-
-        </div>
-
-      </div>
-
-      <div class="card" style="margin-bottom:20px;">
-        <div class="card-title">📚 Recursive Intelligence Architecture</div>
-
-        <div class="documents-grid">
-
-          <div class="doc-card">
-            <div class="doc-label">Primary Strategic Anchor</div>
-            <div class="doc-title">National Agroecology Transition Policy</div>
-          </div>
-
-          <div class="doc-card">
-            <div class="doc-label">Recursive Governance Layer</div>
-            <div class="doc-title">National → Sector Strategy</div>
-          </div>
-
-          <div class="doc-card">
-            <div class="doc-label">Governance Owner</div>
-            <div class="doc-title">Ministry of Food & Agriculture</div>
-          </div>
-
-          <div class="doc-card">
-            <div class="doc-label">Horizontal Visibility</div>
-            <div class="doc-title">Accessible</div>
-          </div>
-
-          <div class="doc-card">
-            <div class="doc-label">Reference Chain Integrity</div>
-            <div class="doc-title">Strong</div>
-          </div>
-
-          <div class="doc-card">
-            <div class="doc-label">Propagation Architecture</div>
-            <div class="doc-title">Operationally Stable</div>
-          </div>
-
-          <div class="doc-card">
-            <div class="doc-label">Recursive Inheritance</div>
-            <div class="doc-title">C1-C2-C3 Preserved</div>
-          </div>
-
-          <div class="doc-card">
-            <div class="doc-label">Cross-Policy Integration</div>
-            <div class="doc-title">Moderate</div>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="section-grid">
-
-        <div class="card">
-          <div class="card-title">📡 Propagation Intelligence</div>
-
-          <div class="summary-box">
-            <h4>Strongest Propagation</h4>
-            <p>PRG-2 Circular Food Systems — 81%</p>
-          </div>
-
-          <div class="summary-box">
-            <h4>Weakest Propagation</h4>
-            <p>PRG-3 Nutrition & Youth — 52%</p>
-          </div>
-
-        </div>
-
-        <div class="card">
-          <div class="card-title">🧠 Recursive Governance Intelligence Synthesis</div>
-
-          <div class="summary-box">
-            <h4>Executive Summary</h4>
-            <p>Policy intelligence architecture remains structurally coherent with stable recursive continuity.</p>
-          </div>
-
-          <div class="summary-box">
-            <h4>Propagation Outlook</h4>
-            <p>Monitoring propagation remains partially unstable across programme transition layers.</p>
-          </div>
-
-          <div class="summary-box">
-            <h4>Reviewer Focus</h4>
-            <p>Cross-policy escalation inheritance and recursive monitoring sufficiency.</p>
-          </div>
-
-        </div>
-
-      </div>
-
+  const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>PCAP Policy Governance Intelligence Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#0f172a;font-family:Arial,sans-serif;padding:18px}.page{max-width:1560px;margin:0 auto}.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px;box-shadow:0 1px 8px rgba(15,23,42,.05)}.mb{margin-bottom:16px}.header{display:flex;justify-content:space-between;align-items:flex-start}.eyebrow{font-size:13px;font-weight:900;color:#334155}.title{font-size:34px;font-weight:900;margin-top:6px}.sub{color:#64748b;margin-top:8px}.meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;font-size:13px;font-weight:800}.grid{display:grid;gap:14px}.g5{grid-template-columns:repeat(5,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}.kpi-card{min-height:210px}.card-title{font-size:15px;font-weight:900;margin-bottom:10px}.info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border:1px solid #94a3b8;border-radius:50%;font-size:11px;color:#64748b}.gauge-wrap{height:125px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}.gauge-face{position:relative;width:218px;height:109px;border-radius:218px 218px 0 0;background:conic-gradient(from 270deg,#dc2626 0 45deg,#f97316 45deg 72deg,#2563eb 72deg 144deg,#16a34a 144deg 180deg,#e5e7eb 180deg)}.gauge-inner{position:absolute;left:34px;top:34px;width:150px;height:75px;border-radius:150px 150px 0 0;background:#fff}.needle{position:absolute;left:107px;bottom:0;width:4px;height:82px;background:#111827;transform-origin:bottom center;z-index:4}.hub{position:absolute;left:97px;bottom:-11px;width:24px;height:24px;border-radius:50%;background:#111827;border:5px solid #fff;z-index:5}.gauge-value{position:absolute;left:0;right:0;bottom:27px;text-align:center;font-size:34px;font-weight:900;z-index:6}.gauge-label{position:absolute;left:0;right:0;bottom:9px;text-align:center;font-size:12px;font-weight:900;z-index:6}.scale{display:flex;justify-content:space-between;color:#64748b;font-size:12px;font-weight:800;margin-top:4px}.assessment{background:linear-gradient(135deg,#f8fafc,#eff6ff)}.assessment h2{margin:0 0 12px;font-size:20px}.mini{background:#fff;border:1px solid #dbeafe;border-radius:10px;padding:12px}.mini span{display:block;color:#64748b;font-size:12px;font-weight:800}.metric{font-size:30px;font-weight:900;margin:6px 0}.interpret{margin-top:12px;border-left:5px solid #2563eb;background:#fff;border-radius:10px;padding:14px}.tag{display:inline-block;background:#f8fafc;border:1px solid #e5e7eb;border-radius:999px;padding:7px 10px;margin:4px;font-size:12px;font-weight:800}.bar-row{display:grid;grid-template-columns:230px 1fr 55px;gap:12px;align-items:center;margin:12px 0}.bar-label small{display:block;color:#64748b;font-size:11px}.track{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden}.fill{height:100%;border-radius:999px}.weak{border:1px solid #fecaca;background:#fff1f2;color:#b91c1c;border-radius:10px;padding:12px;font-weight:900;margin-top:14px;display:flex;justify-content:space-between}.chain{display:grid;grid-template-columns:1fr 32px 1fr 32px 1fr 32px 1fr;gap:8px;align-items:center}.node{background:#eff6ff;border:1px solid #dbeafe;border-radius:10px;padding:12px;min-height:72px}.node b,.node span{display:block}.arrow{text-align:center;font-size:24px;color:#2563eb;font-weight:900}.docgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.doc{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px}.doc b{display:block;font-size:12px;color:#475569;margin-bottom:4px}.box{border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff}.box h4{margin:0 0 6px;font-size:13px}.box p{margin:0;color:#475569;font-size:13px;line-height:1.45}.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th,.tbl td{border:1px solid #e5e7eb;padding:10px}.tbl th{background:#f8fafc}.tbl td:nth-child(2){font-weight:900}.status{font-weight:900;border-radius:999px;padding:5px 9px;background:#dbeafe;color:#1d4ed8}.fragile{background:#ffedd5;color:#9a3412}.strong{background:#dcfce7;color:#166534}@media(max-width:1150px){.g5,.g3,.g2,.docgrid,.chain{grid-template-columns:1fr}.arrow{display:none}.header{display:block}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card header mb">
+    <div>
+      <div class="eyebrow">🧠 Policy Governance Intelligence Dashboard</div>
+      <div class="title">National Agroecology Transition Policy</div>
+      <div class="sub">Policy Intelligence • Recursive Governance Architecture • Propagation Intelligence</div>
+      <div class="meta"><span>🏷️ Agriculture Policy</span><span>🇬🇭 Ghana</span><span>🏛️ MoFA</span><span>📄 POL-1</span></div>
     </div>
-  </body>
-  </html>
-  `);
+    <div class="meta"><span>📅 Updated: 5/23/2026</span><span>⬇ Export</span></div>
+  </div>
+
+  <div class="grid g5 mb">
+    ${gauge('Policy Governance Intelligence Score',82)}
+    ${gauge('Policy Aggregation Intelligence',78)}
+    ${gauge('Intrinsic OCI-D',84)}
+    ${gauge('Intrinsic OCI-O',68)}
+    ${gauge('Strategic Fragmentation Index',28,true)}
+  </div>
+
+  <div class="card assessment mb">
+    <h2>🧠 Overall Policy-Level Governance Assessment</h2>
+    <div class="grid g3">
+      <div class="mini"><span>⚙️ POG — Policy Operational Governance</span><div class="metric" style="color:#2563eb">74%</div>Moderate</div>
+      <div class="mini"><span>🧠 PIG — Policy Governance Intelligence</span><div class="metric" style="color:#16a34a">82%</div>Strong</div>
+      <div class="mini"><span>⚖️ Intelligence–Execution Differential</span><div class="metric">8%</div>🟢 Aligned</div>
+    </div>
+    <div class="interpret"><b>🧩 Recursively Coherent Policy System</b><p>Policy intelligence architecture remains structurally coherent, while execution propagation requires continued monitoring through programme transition layers.</p><span class="tag">🟢 Recursive continuity</span><span class="tag">🔵 Propagation integrity</span><span class="tag">🟠 Monitoring drift</span><span class="tag">🔴 Escalation inheritance risk</span></div>
+  </div>
+
+  <div class="grid g2 mb">
+    <div class="card"><div class="card-title">Recursive Governance Intelligence Components (C1–C6)</div>${bar('C1 Strategic Alignment','Policy-to-strategy alignment',90)}${bar('C2 Policy Translation','Translation into operational governance',85)}${bar('C3 Institutional Architecture','Institutional architecture maturity',75)}${bar('C4 Strategic Monitoring','Monitoring intelligence and continuity',70)}${bar('C5 Strategic Escalation','Escalation inheritance logic',68)}${bar('C6 Strategic Auditability','Recursive traceability and auditability',82)}<div class="weak"><span>Weakest Intelligence Layer<br>C5 Strategic Escalation</span><span>68%</span></div></div>
+    <div class="card"><div class="card-title">Recursive Intelligence Stability Layer</div>${bar('Strategic Alignment Stability','Stable policy alignment',90)}${bar('Translation Continuity','Policy translation continuity',85)}${bar('Architectural Integrity','Institutional and sectoral integrity',75)}${bar('Monitoring Intelligence','Recursive monitoring logic',70)}${bar('Escalation Intelligence','Escalation knowledge transfer',68)}${bar('Recursive Auditability','Documented intelligence chain',82)}</div>
+  </div>
+
+  <div class="grid g3 mb">
+    <div class="card"><div class="card-title">Referential Mapping Chain</div><div class="chain"><div class="node"><b>🏛️ National Strategy</b><span>NS-1</span></div><div class="arrow">➜</div><div class="node"><b>📄 Policy Layer</b><span>POL-1</span></div><div class="arrow">➜</div><div class="node"><b>📦 Programmes</b><span>3 linked programmes</span></div><div class="arrow">➜</div><div class="node"><b>⚙️ Operational Layer</b><span>Handled in POG</span></div></div></div>
+    <div class="card">${gauge('Governance Certification Readiness',76)}</div>
+    <div class="card"><div class="card-title">Propagation Signal</div><div class="box"><h4>Strongest propagation</h4><p>PRG-2 Circular Food Systems — 81%</p></div><div class="box"><h4>Weakest propagation</h4><p>PRG-3 Nutrition & Youth — 52%</p></div><span class="tag">🟠 Monitoring propagation risk</span></div>
+  </div>
+
+  <div class="card mb">
+    <div class="card-title">📚 Recursive Intelligence Architecture</div>
+    <div class="docgrid">
+      <div class="doc"><b>Primary strategic anchor</b>National Agroecology Transition Policy</div>
+      <div class="doc"><b>Recursive governance layer</b>National → Policy</div>
+      <div class="doc"><b>Governance owner</b>Ministry of Food & Agriculture</div>
+      <div class="doc"><b>Horizontal intelligence visibility</b>Accessible</div>
+      <div class="doc"><b>National reference documents</b>National Climate Action Strategy</div>
+      <div class="doc"><b>Regional reference documents</b>Regional Agroecology Guideline</div>
+      <div class="doc"><b>Propagation architecture</b>Operationally stable</div>
+      <div class="doc"><b>Recursive inheritance links</b>C1 • C2 • C3 preserved</div>
+    </div>
+    <div><span class="tag">📘 Strategic Source</span><span class="tag">🧭 Governance Translation</span><span class="tag">🔗 Propagation Chain</span><span class="tag">🏛 Institutional Ownership</span><span class="tag">🌍 Regional Alignment</span></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card"><div class="card-title">Linked Programme Governance Intelligence Benchmarking</div><table class="tbl"><tr><th>#</th><th>Programme</th><th>Governance Intelligence</th><th>Status</th></tr><tr><td>1</td><td>PRG-1 Agroecology Pilot</td><td>78%</td><td><span class="status">Moderate</span></td></tr><tr><td>2</td><td>PRG-2 Circular Food Systems</td><td>81%</td><td><span class="status strong">Strong</span></td></tr><tr><td>3</td><td>PRG-3 Nutrition & Youth</td><td>52%</td><td><span class="status fragile">Fragile</span></td></tr></table></div>
+    <div class="card"><div class="card-title">Recursive Governance Intelligence Synthesis</div><div class="box"><h4>Executive Summary</h4><p>Policy intelligence architecture remains structurally coherent with stable recursive continuity.</p></div><div class="box"><h4>Propagation Outlook</h4><p>Monitoring propagation remains partially unstable across programme transition layers.</p></div><div class="box"><h4>Reviewer Focus</h4><p>Cross-policy escalation inheritance and recursive monitoring sufficiency.</p></div><div class="box"><h4>Intelligence Strengths</h4><p>✅ Strong strategic alignment<br>✅ Coherent translation architecture<br>✅ Traceable policy intelligence chain</p></div><div class="box"><h4>Intelligence Gaps</h4><p>⚠️ Escalation inheritance remains uneven<br>⚠️ Monitoring intelligence requires stronger propagation evidence</p></div></div>
+  </div>
+</div>
+</body>
+</html>`;
+  res.type('html').send(html);
 });
 
-function renderGauge(title,value,color){
-  return `
-    <div class="card">
-      <div class="card-title">${title}</div>
-      <div class="gauge">
-        <svg viewBox="0 0 200 120">
-          <path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="#e5e7eb" stroke-width="18"/>
-          <path d="M20 100 A80 80 0 0 1 ${20 + (160*value/100)} 100" fill="none" stroke="${color}" stroke-width="18"/>
-        </svg>
-        <div class="gauge-value" style="color:${color}">${value}%</div>
-      </div>
-    </div>
-  `;
-}
+app.get('/api', (req, res) => res.redirect('/'));
 
-function metric(label,value,color){
-  return `
-    <div class="metric-row">
-      <div style="width:70%">
-        <div style="font-size:13px;font-weight:bold">${label}</div>
-        <div class="bar">
-          <div class="bar-fill" style="width:${value}%;background:${color}"></div>
-        </div>
-      </div>
-      <div style="font-weight:bold">${value}%</div>
-    </div>
-  `;
-}
-
-app.listen(PORT, () => {
-  console.log('PIG dashboard running');
-});
+app.listen(PORT, () => console.log(`PIG dashboard running on ${PORT}`));
